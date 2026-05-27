@@ -54,17 +54,72 @@ swift build
 swift test
 ```
 
-To assemble a runnable `.app` locally (ad-hoc signed):
+### Assemble a runnable `.app`
+
+`bin/make-app.sh` builds the binary, wraps it in a proper `.app` bundle, embeds `Sparkle.framework`, writes `Info.plist`, and code-signs. With no signing identity it signs **ad-hoc** (`-`), which is enough to run locally and on your own machines.
 
 ```bash
-bin/make-app.sh        # builds dist/CapMind.app for the host arch
+swift build -c release      # required once so Sparkle.framework is fetched into .build/artifacts
+bin/make-app.sh             # → dist/CapMind.app (host arch, ad-hoc signed)
+# or a universal (arm64 + x86_64) bundle with an explicit version:
+bin/make-app.sh 0.1.0 universal
 ```
 
-Releases are produced by `.github/workflows/release.yml` on a `v*` tag: build → Developer-ID sign (hardened runtime) → notarize → staple → GitHub Release → Sparkle appcast on `gh-pages`.
+Open it with `open dist/CapMind.app` (or move it to `/Applications`).
 
-### Required release configuration
+### Run it on another Mac
 
-Before cutting a release, set these GitHub repo **secrets**: `MACOS_CERTIFICATE_P12_BASE64`, `MACOS_CERTIFICATE_P12_PASSWORD`, `APPLE_ID`, `APPLE_ID_PASSWORD`, `APPLE_TEAM_ID`, `SPARKLE_ED_PRIVATE_KEY`. Generate a Sparkle EdDSA key pair once (`generate_keys` from the Sparkle tools) and paste the **public** key into `SU_PUBLIC_ED_KEY` in `bin/make-app.sh`.
+An **ad-hoc-signed** build (no Developer ID) is not notarized, so Gatekeeper on a *different* Mac will refuse it on first open. You have three options:
+
+1. **Build on that Mac** (recommended for personal use): clone the repo there, `swift build -c release && bin/make-app.sh`, then `open dist/CapMind.app`. Local ad-hoc builds run without Gatekeeper friction.
+2. **Copy the ad-hoc `.app` and clear quarantine on the target Mac:**
+   ```bash
+   xattr -dr com.apple.quarantine /Applications/CapMind.app
+   open /Applications/CapMind.app
+   ```
+   (Or right-click the app → **Open** → **Open** the first time.)
+3. **Distribute properly** with a Developer ID build via the release workflow (see below) — required if other people install it.
+
+First launch: no Dock icon, look for the menu-bar tray icon (red until you add your access key in Settings). The first region capture will prompt for **Screen Recording** permission.
+
+### Sparkle update-signing key
+
+Auto-updates are verified with an EdDSA key pair. You generate it **once**; the private key stays on your machine (and in a CI secret), the public key ships inside the app. The tools come with the Sparkle dependency after a build:
+
+```bash
+swift build                                          # ensures the tools exist
+.build/artifacts/sparkle/Sparkle/bin/generate_keys   # prints the PUBLIC key; stores the PRIVATE key in your login Keychain
+```
+
+- Paste the printed **public** key into `SU_PUBLIC_ED_KEY` in `bin/make-app.sh` (replaces the `REPLACE_WITH_YOUR_SPARKLE_ED_PUBLIC_KEY` placeholder) and commit it. It's safe to be public.
+- For CI, export the **private** key and store it as the `SPARKLE_ED_PRIVATE_KEY` GitHub secret:
+  ```bash
+  .build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle_private_key.pem   # writes the private key to a file
+  # paste the file contents into the SPARKLE_ED_PRIVATE_KEY repo secret, then delete it:
+  rm sparkle_private_key.pem
+  ```
+- Never commit the private key. If you only build/run locally and don't use auto-update, you can leave the placeholder — the app runs fine; only "Check for Updates" needs a real key + a published appcast.
+
+### Releases (signed, notarized, auto-update)
+
+Pushing a `v*` tag runs `.github/workflows/release.yml`: build → Developer-ID sign (hardened runtime) → notarize → staple → GitHub Release → Sparkle appcast on `gh-pages`.
+
+```bash
+git tag v0.1.0 && git push origin v0.1.0
+```
+
+Before the first release, set these GitHub repo **secrets** (Settings → Secrets and variables → Actions):
+
+| Secret | What it is |
+| --- | --- |
+| `MACOS_CERTIFICATE_P12_BASE64` | Your "Developer ID Application" cert + key exported as `.p12`, then `base64`-encoded. |
+| `MACOS_CERTIFICATE_P12_PASSWORD` | Password you set when exporting the `.p12`. |
+| `APPLE_ID` | Apple ID email used for notarization. |
+| `APPLE_ID_PASSWORD` | An app-specific password (appleid.apple.com), not your real password. |
+| `APPLE_TEAM_ID` | Your Apple Developer Team ID. |
+| `SPARKLE_ED_PRIVATE_KEY` | The Sparkle private key from the step above. |
+
+And make sure `SU_PUBLIC_ED_KEY` in `bin/make-app.sh` holds your real Sparkle public key, and `SUFeedURL` points at your `gh-pages` appcast (enable GitHub Pages for the `gh-pages` branch). A Developer ID requires a paid Apple Developer Program membership.
 
 ## Architecture
 
