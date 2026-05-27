@@ -90,6 +90,12 @@ final class StatusItemController: NSObject {
         resetIcon()
     }
 
+    /// Generic alias for any upload operation starting (capture, note, etc.).
+    func operationStarted() { dropStarted() }
+
+    /// Generic alias for any upload operation finishing (capture, note, etc.).
+    func operationFinished() { dropFinished() }
+
     // MARK: - Menu
 
     private func buildMenu() {

@@ -66,7 +66,12 @@ final class NotePanelController: NSObject {
                 appState.sendStatus = .idle
                 self.hide()
             } catch {
-                appState.sendStatus = .error(String(describing: error))
+                // Fix D: user-friendly error message instead of raw Swift description.
+                let message = (error as? MyMindError)?.userMessage ?? error.localizedDescription
+                appState.sendStatus = .error(message)
+                // NOTE: Fix A — NotePanelController has no access to StatusItemController,
+                // so auth-failure icon reset for note submit is handled by AppDelegate
+                // (the result handler is in-process; AppDelegate owns the status controller).
             }
         }
     }
@@ -79,7 +84,13 @@ final class NotePanelController: NSObject {
         let view = NoteInputView(
             appState: appState,
             onSubmit: { [weak self] in self?.submit() },
-            onCancel: { [weak self] in self?.hide() }
+            onCancel: { [weak self] in
+                // Fix E (spec §14.5): Esc discards content so reopening starts empty.
+                // Text is NOT cleared on send-failure to allow retry (spec §12).
+                self?.appState.noteText = ""
+                self?.appState.sendStatus = .idle
+                self?.hide()
+            }
         )
         let hosting = NSHostingView(rootView: view)
         hosting.autoresizingMask = [.width, .height]

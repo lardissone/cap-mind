@@ -18,6 +18,9 @@ final class RegionCaptureController {
     private let onResult: (Result<ObjectRef, Error>) -> Void
     private let service = ScreenshotCaptureService()
 
+    /// Called right before the PNG upload begins, so the caller can show a sending icon/status.
+    var onUploadingStarted: (() -> Void)?
+
     // MARK: - Overlay state
 
     private var overlayWindows: [(window: OverlayWindow, view: OverlayView)] = []
@@ -97,6 +100,8 @@ final class RegionCaptureController {
                 let pngData = try await service.capturePNG(display: scDisplay, rect: captureRect, scale: scale)
                 let timestamp = Self.timestamp()
                 let filename = "capmind-\(timestamp).png"
+                // Notify the caller that the upload is about to start.
+                onUploadingStarted?()
                 let ref = try await client.createObjectFromFile(pngData, mimeType: "image/png", filename: filename)
                 onResult(.success(ref))
             } catch {

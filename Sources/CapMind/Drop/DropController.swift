@@ -24,6 +24,10 @@ final class DropController {
     /// Called when all items have been processed.
     var onFinished: (_ succeeded: Int, _ failed: [String]) -> Void = { _, _ in }
 
+    /// Fix A: Called when an upload fails with an authentication error so the caller can
+    /// surface the unconfigured state + red icon without needing to parse the failure strings.
+    var onAuthFailure: (() -> Void)?
+
     // MARK: - Private state
 
     private let client: MyMindClient
@@ -62,6 +66,10 @@ final class DropController {
                     let reason = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
                     failures.append(reason)
                     print("[DropController] Item \(index + 1)/\(total) failed: \(reason)")
+                    // Fix A: notify the caller immediately on auth failure so the icon can be reset.
+                    if case .unauthorized = error as? MyMindError {
+                        self.onAuthFailure?()
+                    }
                 }
 
                 self.onProgress(index + 1, total)

@@ -42,32 +42,54 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         regionCaptureController = RegionCaptureController(client: client) { [weak self] result in
             guard let self else { return }
+            // Fix B: clear the sending icon on both success and failure.
+            self.statusController.operationFinished()
             switch result {
             case .success:
                 self.toastController.show("Uploaded \u{2713}", style: .success, autoDismissAfter: 1.5)
                 self.appState.status = .ready
+                // Fix C: reflect success in the menu status line.
+                self.reflect("Ready")
             case .failure(let error):
                 let msg: String
                 if let mmError = error as? MyMindError {
                     msg = mmError.userMessage
+                    // Fix A: mid-session auth failure → surface unconfigured state + red icon.
+                    if case .unauthorized = mmError {
+                        self.appState.isConfigured = self.settings.isConfigured
+                        self.statusController.resetIcon()
+                    }
                 } else {
                     msg = error.localizedDescription
                 }
                 self.toastController.show(msg, style: .error, autoDismissAfter: nil)
                 self.appState.status = .error(msg)
+                // Fix C: reflect error in the menu status line.
+                self.reflect("Last error: \(msg)")
             }
+        }
+
+        // Fix B: show sending icon when the PNG upload actually begins (after interactive selection).
+        regionCaptureController.onUploadingStarted = { [weak self] in
+            guard let self else { return }
+            self.statusController.operationStarted()
+            // Fix C: reflect upload start in the menu status line.
+            self.reflect("Sending\u{2026}")
         }
 
         dropController = DropController(client: client)
 
         dropController.onProgress = { [weak self] completed, total in
             guard let self else { return }
+            let progressText = "Uploading \(completed)/\(total)\u{2026}"
             if completed == 1 && total >= 1 {
                 // Show the initial progress toast at the start of the first item.
-                self.toastController.show("Uploading \(completed)/\(total)\u{2026}", style: .progress, autoDismissAfter: nil)
+                self.toastController.show(progressText, style: .progress, autoDismissAfter: nil)
             } else {
-                self.toastController.update("Uploading \(completed)/\(total)\u{2026}")
+                self.toastController.update(progressText)
             }
+            // Fix C: reflect upload progress in the menu status line.
+            self.reflect("Sending\u{2026}")
         }
 
         dropController.onFinished = { [weak self] succeeded, failed in
@@ -75,11 +97,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             if failed.isEmpty {
                 let msg = succeeded == 1 ? "Uploaded \u{2713}" : "\(succeeded) uploaded \u{2713}"
                 self.toastController.show(msg, style: .success, autoDismissAfter: 1.5)
+                // Fix C: reflect success in the menu status line.
+                self.reflect("Ready")
             } else {
                 let msg = "\(succeeded) uploaded, \(failed.count) failed"
                 self.toastController.show(msg, style: .error, autoDismissAfter: nil)
+                // Fix C: reflect partial failure in the menu status line.
+                self.reflect("Last error: \(failed.count) item(s) failed")
             }
             self.statusController.dropFinished()
+        }
+
+        // Fix A: mid-session auth failure during a drop → surface unconfigured state + red icon.
+        dropController.onAuthFailure = { [weak self] in
+            guard let self else { return }
+            self.appState.isConfigured = self.settings.isConfigured
+            self.statusController.resetIcon()
         }
 
         statusController.onDrop = { [weak self] pasteboard in
@@ -146,5 +179,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Set initial icon state (red when not configured).
         statusController.resetIcon()
+        // Fix C: set an initial status line so it's never blank.
+        reflect(settings.isConfigured ? "Ready" : "Not configured")
+    }
+
+    // MARK: - Helpers
+
+    /// Fix C: Updates the menu-bar status line (the disabled top item in the menu).
+    private func reflect(_ text: String) {
+        statusController.setStatusLine(text)
     }
 }
