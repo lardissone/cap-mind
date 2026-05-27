@@ -61,11 +61,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                     print("[CapMind]   - \(reason)")
                 }
             }
-            self?.statusController.setIcon(self?.settings.isConfigured == true ? .normal : .attention)
-        }
-
-        dropController.onSetIcon = { [weak self] icon in
-            self?.statusController.setIcon(icon)
+            self?.statusController.dropFinished()
         }
 
         statusController.onDrop = { [weak self] pasteboard in

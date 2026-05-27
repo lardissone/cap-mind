@@ -24,12 +24,10 @@ final class DropController {
     /// Called when all items have been processed.
     var onFinished: (_ succeeded: Int, _ failed: [String]) -> Void = { _, _ in }
 
-    /// Called to drive the status-item icon during upload (set by AppDelegate).
-    var onSetIcon: ((StatusItemController.Icon) -> Void)?
-
     // MARK: - Private state
 
     private let client: MyMindClient
+    private var isProcessing = false
 
     // MARK: - Init
 
@@ -41,6 +39,8 @@ final class DropController {
 
     /// Parse the pasteboard and process all items serially.
     func handle(_ pasteboard: NSPasteboard) {
+        guard !isProcessing else { return }
+
         let items = parseItems(from: pasteboard)
         guard !items.isEmpty else {
             print("[DropController] Pasteboard contained no recognisable items.")
@@ -48,7 +48,7 @@ final class DropController {
         }
 
         let total = items.count
-        onSetIcon?(.sending)
+        isProcessing = true
 
         Task {
             var succeeded = 0
@@ -64,22 +64,18 @@ final class DropController {
                     print("[DropController] Item \(index + 1)/\(total) failed: \(reason)")
                 }
 
-                await MainActor.run {
-                    self.onProgress(index + 1, total)
-                }
+                self.onProgress(index + 1, total)
             }
 
-            await MainActor.run {
-                let summary: String
-                if failures.isEmpty {
-                    summary = total == 1 ? "Uploaded ✓" : "\(succeeded) uploaded ✓"
-                } else {
-                    summary = "\(succeeded) uploaded, \(failures.count) failed"
-                }
-                print("[DropController] Done: \(summary)")
-                self.onFinished(succeeded, failures)
-                self.onSetIcon?(.normal)
+            let summary: String
+            if failures.isEmpty {
+                summary = total == 1 ? "Uploaded ✓" : "\(succeeded) uploaded ✓"
+            } else {
+                summary = "\(succeeded) uploaded, \(failures.count) failed"
             }
+            print("[DropController] Done: \(summary)")
+            self.isProcessing = false
+            self.onFinished(succeeded, failures)
         }
     }
 
@@ -93,10 +89,10 @@ final class DropController {
                 return fileURLs.map { .file(url: $0) }
             }
 
-            // Branch 2: web URL (non-file)
+            // Branch 2: web URLs (non-file) — return all of them
             let webURLs = urls.filter { !$0.isFileURL }
-            if let first = webURLs.first {
-                return [.url(first)]
+            if !webURLs.isEmpty {
+                return webURLs.map { .url($0) }
             }
         }
 
@@ -125,10 +121,10 @@ final class DropController {
             guard DropPayload.isSupportedFileExtension(ext) else {
                 throw DropError.unsupportedFormat(ext)
             }
-            let data = try Data(contentsOf: url)
-            guard !DropPayload.isOversize(bytes: data.count) else {
-                throw DropError.fileTooLarge
-            }
+            let attrs = try FileManager.default.attributesOfItem(atPath: url.path)
+            let fileSize = (attrs[.size] as? Int) ?? 0
+            guard !DropPayload.isOversize(bytes: fileSize) else { throw DropError.fileTooLarge }
+            let data = try await Task.detached(priority: .userInitiated) { try Data(contentsOf: url) }.value
             let mime = DropPayload.mimeType(forExtension: ext)
             _ = try await client.createObjectFromFile(data, mimeType: mime, filename: url.lastPathComponent)
 

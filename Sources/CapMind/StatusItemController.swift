@@ -28,6 +28,7 @@ final class StatusItemController: NSObject {
     private var statusLine: NSMenuItem!
     private var menu: NSMenu!
     private var dropView: StatusItemDropView?
+    private var dropInProgress = false
 
     // MARK: - Init
 
@@ -67,6 +68,23 @@ final class StatusItemController: NSObject {
 
         button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: AppConstants.appName)
         button.contentTintColor = tintColor
+    }
+
+    /// Resets the icon to the correct idle state based on whether the app is configured.
+    func resetIcon() {
+        setIcon(settings.isConfigured ? .normal : .attention)
+    }
+
+    /// Called when a drop session begins: owns the sending icon state.
+    func dropStarted() {
+        dropInProgress = true
+        setIcon(.sending)
+    }
+
+    /// Called when the drop session upload finishes: clears the flag and resets the icon.
+    func dropFinished() {
+        dropInProgress = false
+        resetIcon()
     }
 
     // MARK: - Menu
@@ -148,12 +166,13 @@ final class StatusItemController: NSObject {
             guard let self else { return }
             if hovering {
                 self.setIcon(.aboutToReceive)
-            } else {
-                self.setIcon(self.settings.isConfigured ? .normal : .attention)
+            } else if !self.dropInProgress {
+                self.resetIcon()
             }
         }
 
         view.onDrop = { [weak self] pasteboard in
+            self?.dropStarted()
             self?.onDrop?(pasteboard)
         }
     }
