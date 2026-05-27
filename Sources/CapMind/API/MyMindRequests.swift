@@ -17,8 +17,12 @@ enum MyMindRequests {
         append("Content-Disposition: form-data; name=\"metadata\"\r\n")
         append("Content-Type: application/json\r\n\r\n")
         append("{}\r\n")
+        let safeFilename = filename
+            .replacingOccurrences(of: "\"", with: "_")
+            .replacingOccurrences(of: "\r", with: "")
+            .replacingOccurrences(of: "\n", with: "")
         append("--\(boundary)\r\n")
-        append("Content-Disposition: form-data; name=\"blob\"; filename=\"\(filename)\"\r\n")
+        append("Content-Disposition: form-data; name=\"blob\"; filename=\"\(safeFilename)\"\r\n")
         append("Content-Type: \(mimeType)\r\n\r\n")
         body.append(blob)
         append("\r\n")

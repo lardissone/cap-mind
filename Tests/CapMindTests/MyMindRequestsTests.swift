@@ -15,6 +15,14 @@ final class MyMindRequestsTests: XCTestCase {
         let obj = try JSONSerialization.jsonObject(with: data) as! [String: Any]
         XCTAssertEqual(obj["url"] as? String, "https://e.com/a")
     }
+    func test_multipart_sanitizes_filename_with_quotes_and_newlines() {
+        let (body, _) = MyMindRequests.multipart(
+            boundary: "B", blob: Data("x".utf8), mimeType: "image/png",
+            filename: "a\"b\r\nContent-Type: evil.png")
+        let s = String(data: body, encoding: .utf8)!
+        XCTAssertTrue(s.contains(#"filename="a_bContent-Type: evil.png""#))
+        XCTAssertFalse(s.contains("\r\nContent-Type: evil"))  // no injected header line
+    }
     func test_multipart_frames_metadata_and_blob() {
         let blob = Data("PNGDATA".utf8)
         let (body, contentType) = MyMindRequests.multipart(

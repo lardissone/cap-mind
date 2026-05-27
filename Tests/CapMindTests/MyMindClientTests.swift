@@ -43,6 +43,24 @@ final class MyMindClientTests: XCTestCase {
             try await makeClient().createObjectFromContent("x")
         }
     }
+    func test_mapError_covers_all_statuses() {
+        func p(_ type: String, _ status: Int, _ detail: String?) -> ProblemJSON {
+            // ProblemJSON is Decodable-only; build via JSON to get an instance.
+            let dict: [String: Any] = detail == nil
+                ? ["type": type, "status": status]
+                : ["type": type, "status": status, "detail": detail!]
+            let data = try! JSONSerialization.data(withJSONObject: dict)
+            return try! JSONDecoder().decode(ProblemJSON.self, from: data)
+        }
+        XCTAssertEqual(MyMindClient.mapError(status: 400, problem: p("BadRequest", 400, "bad"), rateLimitHeader: nil), .badRequest("bad"))
+        XCTAssertEqual(MyMindClient.mapError(status: 403, problem: p("Forbidden", 403, nil), rateLimitHeader: nil), .forbidden)
+        XCTAssertEqual(MyMindClient.mapError(status: 404, problem: p("NotFound", 404, nil), rateLimitHeader: nil), .notFound)
+        XCTAssertEqual(MyMindClient.mapError(status: 422, problem: p("Unprocessable", 422, "why"), rateLimitHeader: nil), .unprocessable("why"))
+        XCTAssertEqual(MyMindClient.mapError(status: 500, problem: p("InternalServerError", 500, "oops"), rateLimitHeader: nil), .server("oops"))
+        XCTAssertEqual(MyMindClient.mapError(status: 503, problem: p("Unavailable", 503, nil), rateLimitHeader: nil), .unavailable)
+        XCTAssertEqual(MyMindClient.mapError(status: 429, problem: p("RateLimited", 429, nil), rateLimitHeader: #""burst";r=0;t=7"#), .rateLimited(retryAfterSeconds: 7))
+        XCTAssertEqual(MyMindClient.mapError(status: 429, problem: nil, rateLimitHeader: nil), .rateLimited(retryAfterSeconds: 1))
+    }
     private func assertThrows(_ expected: MyMindError, _ block: () async throws -> Void,
                               file: StaticString = #filePath, line: UInt = #line) async {
         do { try await block(); XCTFail("expected throw", file: file, line: line) }

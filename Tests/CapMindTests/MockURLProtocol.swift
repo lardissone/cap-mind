@@ -8,6 +8,10 @@ final class MockURLProtocol: URLProtocol {
     override class func canInit(with request: URLRequest) -> Bool { true }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
+        guard !Self.responses.isEmpty else {
+            client?.urlProtocol(self, didFailWithError: URLError(.unknown))
+            return
+        }
         let idx = min(Self.requestCount, Self.responses.count - 1)
         Self.requestCount += 1
         let (status, headers, body) = Self.responses[idx]

@@ -1,6 +1,6 @@
 import Foundation
 
-struct MyMindCredentials: Equatable {
+struct MyMindCredentials: Equatable, Sendable {
     let keyID: String
     let secret: String  // base secret string as shown once by MyMind
 }
