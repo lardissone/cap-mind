@@ -18,11 +18,16 @@ final class StatusItemController: NSObject {
     var onOpenSettings: (() -> Void)?
     var onCheckForUpdates: (() -> Void)?
 
+    /// Set by AppDelegate to route dropped pasteboard items to DropController.
+    var onDrop: ((NSPasteboard) -> Void)?
+
     // MARK: - State
 
     private let settings: AppSettings
     private let statusItem: NSStatusItem
     private var statusLine: NSMenuItem!
+    private var menu: NSMenu!
+    private var dropView: StatusItemDropView?
 
     // MARK: - Init
 
@@ -32,6 +37,7 @@ final class StatusItemController: NSObject {
         super.init()
         setIcon(.normal)
         buildMenu()
+        installDropView()
     }
 
     // MARK: - Icon
@@ -66,37 +72,37 @@ final class StatusItemController: NSObject {
     // MARK: - Menu
 
     private func buildMenu() {
-        let menu = NSMenu()
+        let m = NSMenu()
 
         // Status line (disabled, reflects app state)
         let statusLineItem = NSMenuItem(title: AppConstants.appName, action: nil, keyEquivalent: "")
         statusLineItem.isEnabled = false
-        menu.addItem(statusLineItem)
+        m.addItem(statusLineItem)
         self.statusLine = statusLineItem
 
-        menu.addItem(.separator())
+        m.addItem(.separator())
 
         // New note
         let newNoteItem = NSMenuItem(title: "New note", action: #selector(handleNewNote), keyEquivalent: "")
         newNoteItem.target = self
-        menu.addItem(newNoteItem)
+        m.addItem(newNoteItem)
 
         // Capture region
         let captureItem = NSMenuItem(title: "Capture region", action: #selector(handleCaptureRegion), keyEquivalent: "")
         captureItem.target = self
-        menu.addItem(captureItem)
+        m.addItem(captureItem)
 
-        menu.addItem(.separator())
+        m.addItem(.separator())
 
         // Open Settings
         let settingsItem = NSMenuItem(title: "Open Settings\u{2026}", action: #selector(handleOpenSettings), keyEquivalent: "")
         settingsItem.target = self
-        menu.addItem(settingsItem)
+        m.addItem(settingsItem)
 
         // Check for Updates
         let updatesItem = NSMenuItem(title: "Check for Updates\u{2026}", action: #selector(handleCheckForUpdates), keyEquivalent: "")
         updatesItem.target = self
-        menu.addItem(updatesItem)
+        m.addItem(updatesItem)
 
         // About
         let aboutItem = NSMenuItem(
@@ -105,16 +111,65 @@ final class StatusItemController: NSObject {
             keyEquivalent: ""
         )
         aboutItem.target = self
-        menu.addItem(aboutItem)
+        m.addItem(aboutItem)
 
-        menu.addItem(.separator())
+        m.addItem(.separator())
 
         // Quit
         let quitItem = NSMenuItem(title: "Quit", action: #selector(handleQuit), keyEquivalent: "q")
         quitItem.target = self
-        menu.addItem(quitItem)
+        m.addItem(quitItem)
 
-        statusItem.menu = menu
+        // NOTE: We intentionally do NOT assign `statusItem.menu = m` here.
+        // Doing so causes AppKit to intercept mouseDown on the button to open the menu,
+        // which prevents NSDraggingDestination from receiving drag events on StatusItemDropView.
+        // Instead, we keep the menu reference and pop it manually from StatusItemDropView.onClick.
+        // See StatusItemDropView for the full explanation and tradeoff note.
+        self.menu = m
+    }
+
+    // MARK: - Drop view installation
+
+    /// Embeds a `StatusItemDropView` as a subview of `statusItem.button`, filling it.
+    /// This view handles both drag-and-drop (NSDraggingDestination) and click-to-show-menu.
+    private func installDropView() {
+        guard let button = statusItem.button else { return }
+
+        let view = StatusItemDropView(frame: button.bounds)
+        view.autoresizingMask = [.width, .height]
+        button.addSubview(view)
+        self.dropView = view
+
+        view.onClick = { [weak self] in
+            self?.showMenu()
+        }
+
+        view.onDragStateChanged = { [weak self] hovering in
+            guard let self else { return }
+            if hovering {
+                self.setIcon(.aboutToReceive)
+            } else {
+                self.setIcon(self.settings.isConfigured ? .normal : .attention)
+            }
+        }
+
+        view.onDrop = { [weak self] pasteboard in
+            self?.onDrop?(pasteboard)
+        }
+    }
+
+    // MARK: - Manual menu presentation
+
+    /// Pops the menu below the status-item button without requiring `statusItem.menu` to be set.
+    ///
+    /// `NSMenu.popUp(positioning:at:in:)` is the documented way to show a menu at an arbitrary
+    /// location.  The only visual difference from the native path is that the menu-bar button
+    /// does not receive the system highlight appearance while the menu is open.
+    /// See `StatusItemDropView` for the full tradeoff discussion.
+    private func showMenu() {
+        guard let button = statusItem.button else { return }
+        // Anchor below the bottom-left corner of the button in screen coordinates.
+        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 2), in: button)
     }
 
     // MARK: - Menu actions

@@ -17,6 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var updaterController: SPUStandardUpdaterController!
     private var notePanelController: NotePanelController!
     private var regionCaptureController: RegionCaptureController!
+    private var dropController: DropController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -42,6 +43,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 print("[CapMind] Capture failed: \(error)")
                 self?.appState.status = .error(error.localizedDescription)
             }
+        }
+
+        // Drop controller setup
+        dropController = DropController(client: client)
+
+        dropController.onProgress = { completed, total in
+            print("[CapMind] Drop progress: \(completed)/\(total)")
+        }
+
+        dropController.onFinished = { [weak self] succeeded, failed in
+            if failed.isEmpty {
+                print("[CapMind] Drop finished: \(succeeded == 1 ? "Uploaded ✓" : "\(succeeded) uploaded ✓")")
+            } else {
+                print("[CapMind] Drop finished: \(succeeded) uploaded, \(failed.count) failed")
+                for reason in failed {
+                    print("[CapMind]   - \(reason)")
+                }
+            }
+            self?.statusController.setIcon(self?.settings.isConfigured == true ? .normal : .attention)
+        }
+
+        dropController.onSetIcon = { [weak self] icon in
+            self?.statusController.setIcon(icon)
+        }
+
+        statusController.onDrop = { [weak self] pasteboard in
+            self?.dropController.handle(pasteboard)
         }
 
         // Wiring for later phases:
