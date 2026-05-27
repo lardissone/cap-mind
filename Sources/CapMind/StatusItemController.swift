@@ -25,6 +25,9 @@ final class StatusItemController: NSObject {
 
     private let settings: AppSettings
     private let statusItem: NSStatusItem
+
+    /// The underlying status-bar button, used to anchor the toast popover.
+    var statusBarButton: NSStatusBarButton? { statusItem.button }
     private var statusLine: NSMenuItem!
     private var menu: NSMenu!
     private var dropView: StatusItemDropView?

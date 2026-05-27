@@ -1,6 +1,5 @@
 import SwiftUI
 import KeyboardShortcuts
-import Sparkle
 
 @main
 struct CapMindApp: App {
@@ -14,10 +13,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let appState = AppState()
     private var statusController: StatusItemController!
     private(set) var client: MyMindClient!
-    private var updaterController: SPUStandardUpdaterController!
     private var notePanelController: NotePanelController!
     private var regionCaptureController: RegionCaptureController!
     private var dropController: DropController!
+    private var settingsWindowController: SettingsWindowController!
+    private var toastController: ToastController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -25,58 +25,126 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         client = MyMindClient(credentialsProvider: settings)
         appState.isConfigured = settings.isConfigured
 
-        updaterController = SPUStandardUpdaterController(
-            startingUpdater: true,
-            updaterDelegate: nil,
-            userDriverDelegate: nil
+        statusController = StatusItemController(settings: settings)
+
+        toastController = ToastController(buttonProvider: { [weak self] in
+            self?.statusController.statusBarButton
+        })
+
+        settingsWindowController = SettingsWindowController(
+            settings: settings,
+            appState: appState,
+            client: client,
+            onConfigured: { [weak self] in self?.statusController.resetIcon() }
         )
 
-        statusController = StatusItemController(settings: settings)
         notePanelController = NotePanelController(client: client, settings: settings, appState: appState)
 
         regionCaptureController = RegionCaptureController(client: client) { [weak self] result in
+            guard let self else { return }
             switch result {
-            case .success(let ref):
-                print("[CapMind] Captured: \(ref.id)")
-                self?.appState.status = .ready
+            case .success:
+                self.toastController.show("Uploaded \u{2713}", style: .success, autoDismissAfter: 1.5)
+                self.appState.status = .ready
             case .failure(let error):
-                print("[CapMind] Capture failed: \(error)")
-                self?.appState.status = .error(error.localizedDescription)
+                let msg: String
+                if let mmError = error as? MyMindError {
+                    msg = mmError.userMessage
+                } else {
+                    msg = error.localizedDescription
+                }
+                self.toastController.show(msg, style: .error, autoDismissAfter: nil)
+                self.appState.status = .error(msg)
             }
         }
 
-        // Drop controller setup
         dropController = DropController(client: client)
 
-        dropController.onProgress = { completed, total in
-            print("[CapMind] Drop progress: \(completed)/\(total)")
+        dropController.onProgress = { [weak self] completed, total in
+            guard let self else { return }
+            if completed == 1 && total >= 1 {
+                // Show the initial progress toast at the start of the first item.
+                self.toastController.show("Uploading \(completed)/\(total)\u{2026}", style: .progress, autoDismissAfter: nil)
+            } else {
+                self.toastController.update("Uploading \(completed)/\(total)\u{2026}")
+            }
         }
 
         dropController.onFinished = { [weak self] succeeded, failed in
+            guard let self else { return }
             if failed.isEmpty {
-                print("[CapMind] Drop finished: \(succeeded == 1 ? "Uploaded ✓" : "\(succeeded) uploaded ✓")")
+                let msg = succeeded == 1 ? "Uploaded \u{2713}" : "\(succeeded) uploaded \u{2713}"
+                self.toastController.show(msg, style: .success, autoDismissAfter: 1.5)
             } else {
-                print("[CapMind] Drop finished: \(succeeded) uploaded, \(failed.count) failed")
-                for reason in failed {
-                    print("[CapMind]   - \(reason)")
-                }
+                let msg = "\(succeeded) uploaded, \(failed.count) failed"
+                self.toastController.show(msg, style: .error, autoDismissAfter: nil)
             }
-            self?.statusController.dropFinished()
+            self.statusController.dropFinished()
         }
 
         statusController.onDrop = { [weak self] pasteboard in
-            self?.dropController.handle(pasteboard)
+            guard let self else { return }
+            guard self.settings.isConfigured else {
+                self.toastController.show("Set up your MyMind access key in Settings", style: .error, autoDismissAfter: nil)
+                self.settingsWindowController.show()
+                return
+            }
+            self.dropController.handle(pasteboard)
         }
 
-        // Wiring for later phases:
-        statusController.onOpenSettings = { /* Phase 6 */ }
-        statusController.onNewNote = { [weak self] in self?.notePanelController.show() }
-        statusController.onCaptureRegion = { [weak self] in self?.regionCaptureController.begin() }
-        statusController.onCheckForUpdates = { [weak self] in
-            self?.updaterController.updater.checkForUpdates()
+        statusController.onOpenSettings = { [weak self] in
+            self?.settingsWindowController.show()
         }
 
-        KeyboardShortcuts.onKeyDown(for: .openNote) { [weak self] in self?.notePanelController.show() }
-        KeyboardShortcuts.onKeyDown(for: .captureRegion) { [weak self] in self?.regionCaptureController.begin() }
+        statusController.onNewNote = { [weak self] in
+            guard let self else { return }
+            guard self.settings.isConfigured else {
+                self.toastController.show("Set up your MyMind access key in Settings", style: .error, autoDismissAfter: nil)
+                self.settingsWindowController.show()
+                return
+            }
+            self.notePanelController.show()
+        }
+
+        statusController.onCaptureRegion = { [weak self] in
+            guard let self else { return }
+            guard self.settings.isConfigured else {
+                self.toastController.show("Set up your MyMind access key in Settings", style: .error, autoDismissAfter: nil)
+                self.settingsWindowController.show()
+                return
+            }
+            self.regionCaptureController.begin()
+        }
+
+        statusController.onCheckForUpdates = {
+            Updater.checkForUpdates()
+        }
+
+        KeyboardShortcuts.onKeyDown(for: .openNote) { [weak self] in
+            guard let self else { return }
+            guard self.settings.isConfigured else {
+                Task { @MainActor in
+                    self.toastController.show("Set up your MyMind access key in Settings", style: .error, autoDismissAfter: nil)
+                    self.settingsWindowController.show()
+                }
+                return
+            }
+            self.notePanelController.show()
+        }
+
+        KeyboardShortcuts.onKeyDown(for: .captureRegion) { [weak self] in
+            guard let self else { return }
+            guard self.settings.isConfigured else {
+                Task { @MainActor in
+                    self.toastController.show("Set up your MyMind access key in Settings", style: .error, autoDismissAfter: nil)
+                    self.settingsWindowController.show()
+                }
+                return
+            }
+            self.regionCaptureController.begin()
+        }
+
+        // Set initial icon state (red when not configured).
+        statusController.resetIcon()
     }
 }
