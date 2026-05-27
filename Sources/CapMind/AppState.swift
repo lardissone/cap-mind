@@ -12,4 +12,9 @@ final class AppState {
 
     var status: Status = .ready
     var isConfigured = false
+
+    // Note panel state
+    var noteText: String = ""
+    var sendStatus: SendStatus = .idle
+    var focusEditorTrigger: Int = 0
 }

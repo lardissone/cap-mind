@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 
@@ -37,6 +38,22 @@ final class AppSettings: CredentialsProviding, @unchecked Sendable {
 
     var iconStyle: IconStyle {
         didSet { defaults.set(iconStyle.rawValue, forKey: Keys.iconStyle) }
+    }
+
+    /// Last window origin, persisted for the `lastUsed` panel position mode.
+    var savedWindowOrigin: NSPoint? {
+        get {
+            guard let s = defaults.string(forKey: Keys.savedWindowOrigin) else { return nil }
+            let parsed = NSPointFromString(s)
+            return (parsed == .zero) ? nil : parsed
+        }
+        set {
+            if let origin = newValue {
+                defaults.set(NSStringFromPoint(origin), forKey: Keys.savedWindowOrigin)
+            } else {
+                defaults.removeObject(forKey: Keys.savedWindowOrigin)
+            }
+        }
     }
 
     // MARK: - Keychain-backed secret
@@ -82,5 +99,6 @@ final class AppSettings: CredentialsProviding, @unchecked Sendable {
         static let panelPosition = "panelPosition"
         static let alwaysOnTop = "alwaysOnTop"
         static let iconStyle = "iconStyle"
+        static let savedWindowOrigin = "savedWindowOrigin"
     }
 }
