@@ -1,5 +1,212 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>CapMind</title>
-<h1>CapMind</h1>
-<p>Sparkle update feed: <a href="appcast.xml">appcast.xml</a></p>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CapMind — drop a thought into your mind</title>
+  <meta name="description" content="A quiet macOS menu-bar companion for mymind.com. Send notes, screenshots, and files straight to your mind — no browser, no friction.">
+
+  <meta property="og:title" content="CapMind">
+  <meta property="og:description" content="Drop a thought into your mind — a quiet macOS menu-bar companion for mymind.com.">
+  <meta property="og:image" content="icon.png">
+  <meta property="og:type" content="website">
+
+  <link rel="icon" href="icon.png">
+
+  <style>
+    :root {
+      --bg: #fbf6ef;
+      --ink: #2a2521;
+      --muted: #8a8178;
+      --hair: rgba(42, 37, 33, 0.10);
+      --accent: #f9582b;
+      --accent-strong: #e04a1f;
+      --shadow: 0 18px 50px -20px rgba(42, 37, 33, 0.28);
+      --glow-1: rgba(249, 88, 43, 0.30);
+      --glow-2: rgba(255, 140, 80, 0.22);
+      --glow-3: rgba(255, 184, 122, 0.18);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #15120f;
+        --ink: #ece6dd;
+        --muted: #9a9088;
+        --hair: rgba(236, 230, 221, 0.12);
+        --accent: #ff6a3d;
+        --accent-strong: #ff7d54;
+        --shadow: 0 18px 50px -20px rgba(0, 0, 0, 0.6);
+        --glow-1: rgba(255, 106, 61, 0.26);
+        --glow-2: rgba(255, 90, 40, 0.18);
+        --glow-3: rgba(255, 120, 60, 0.13);
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* Soft, blurred orange glows behind everything. */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -15%;
+      z-index: -1;
+      pointer-events: none;
+      background:
+        radial-gradient(38% 38% at 82% 6%, var(--glow-1), transparent 70%),
+        radial-gradient(42% 42% at 10% 96%, var(--glow-2), transparent 72%),
+        radial-gradient(34% 34% at 58% 52%, var(--glow-3), transparent 70%);
+      filter: blur(64px);
+    }
+
+    .wrap {
+      max-width: 620px;
+      margin: 0 auto;
+      padding: clamp(64px, 12vh, 140px) 28px 72px;
+    }
+
+    .hero { text-align: center; }
+
+    .icon {
+      width: 104px;
+      height: 104px;
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      display: block;
+      margin: 0 auto 28px;
+    }
+
+    h1 {
+      font-size: clamp(2.4rem, 7vw, 3.1rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin: 0 0 14px;
+    }
+
+    .tagline {
+      font-size: clamp(1.15rem, 3.5vw, 1.4rem);
+      color: var(--muted);
+      font-weight: 400;
+      margin: 0 auto;
+      max-width: 30ch;
+    }
+
+    .cta { text-align: center; margin: 40px 0 8px; }
+
+    .button {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.05rem;
+      padding: 14px 30px;
+      border-radius: 999px;
+      transition: background 0.18s ease, transform 0.18s ease;
+    }
+    .button:hover { background: var(--accent-strong); transform: translateY(-1px); }
+
+    .fineprint {
+      margin-top: 14px;
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+    .fineprint a { color: inherit; }
+
+    .ways {
+      margin: 72px 0;
+      border-top: 1px solid var(--hair);
+    }
+    .way {
+      padding: 26px 4px;
+      border-bottom: 1px solid var(--hair);
+    }
+    .way h2 {
+      font-size: 1.06rem;
+      font-weight: 600;
+      margin: 0 0 4px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+    .way .key {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .way p { margin: 0; color: var(--muted); }
+
+    .shot {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid var(--hair);
+      box-shadow: var(--shadow);
+      display: block;
+      margin: 0 0 72px;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.9rem;
+      border-top: 1px solid var(--hair);
+      padding-top: 28px;
+    }
+    footer a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--hair); }
+    footer a:hover { color: var(--accent); border-color: var(--accent); }
+    .footer-links { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; margin-bottom: 16px; }
+    .made { font-size: 0.82rem; opacity: 0.8; }
+    .made a { border: 0; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <img class="icon" src="icon.png" width="104" height="104" alt="CapMind icon">
+      <h1>CapMind</h1>
+      <p class="tagline">Drop a thought into your mind, straight from the menu bar.</p>
+    </section>
+
+    <div class="cta">
+      <a class="button" href="https://github.com/lardissone/cap-mind/releases/latest">Download for macOS</a>
+      <p class="fineprint">Free &middot; macOS 15+ &middot; needs a <a href="https://mymind.com">mymind</a> account</p>
+    </div>
+
+    <section class="ways">
+      <div class="way">
+        <h2>Note <span class="key">⌘⇧⌥M</span></h2>
+        <p>A small floating editor. Type, ⌘↩, done.</p>
+      </div>
+      <div class="way">
+        <h2>Screenshot <span class="key">⌘⇧⌥S</span></h2>
+        <p>Drag a region; it uploads as a native-resolution image.</p>
+      </div>
+      <div class="way">
+        <h2>Drag &amp; drop</h2>
+        <p>Drop files, a link, text, or an image onto the menu-bar icon.</p>
+      </div>
+    </section>
+
+    <img class="shot" src="screenshot.png" alt="The CapMind note editor">
+
+    <footer>
+      <div class="footer-links">
+        <a href="https://github.com/lardissone/cap-mind">GitHub</a>
+        <a href="https://ko-fi.com/L2Z120QWZL">Support on Ko-fi</a>
+        <a href="https://github.com/lardissone/cap-mind/blob/main/LICENSE">MIT License</a>
+      </div>
+      <p class="made">A quiet companion for <a href="https://mymind.com">mymind.com</a>.</p>
+    </footer>
+  </main>
+</body>
+</html>
