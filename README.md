@@ -139,4 +139,4 @@ If CapMind is useful to you, you can support its development:
 
 ## License
 
-TBD.
+MIT — see [LICENSE](./LICENSE).
