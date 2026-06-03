@@ -187,6 +187,7 @@ jobs:
             --length "$length" \
             --signature "$SIGNATURE_LINE" \
             --release-notes-url "$notes_url" \
+            --release-notes-file "$notes_html" \
             --min-system-version 15.0
 
           git add appcast.xml
