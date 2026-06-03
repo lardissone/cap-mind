@@ -131,6 +131,12 @@ A custom `NSStatusItem` (menu + drag destination) drives three `@MainActor` coor
 
 Dependencies: [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) (global hotkeys) and [Sparkle](https://github.com/sparkle-project/Sparkle) (updates). JWT signing uses CryptoKit; no other third-party libraries.
 
+## Support
+
+If CapMind is useful to you, you can support its development:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/L2Z120QWZL)
+
 ## License
 
 TBD.
