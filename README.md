@@ -10,6 +10,10 @@ A macOS menu-bar app that sends content to [MyMind](https://mymind.com) with zer
 
 CapMind is write-only: it never lists, searches, or shows your existing MyMind objects. It's the sibling of [CapNote](https://github.com/lardissone/cap-note) (same idea, for Capacities) and reuses its architecture, UI patterns, and build pipeline.
 
+<p align="center">
+  <img src="assets/screenshot.png" alt="CapMind menu bar and note editor" width="460">
+</p>
+
 ## Requirements
 
 - macOS 15.0 (Sequoia) or later.
@@ -91,7 +95,7 @@ swift build                                          # ensures the tools exist
 .build/artifacts/sparkle/Sparkle/bin/generate_keys   # prints the PUBLIC key; stores the PRIVATE key in your login Keychain
 ```
 
-- Paste the printed **public** key into `SU_PUBLIC_ED_KEY` in `bin/make-app.sh` (replaces the `REPLACE_WITH_YOUR_SPARKLE_ED_PUBLIC_KEY` placeholder) and commit it. It's safe to be public.
+- Paste the printed **public** key into `SU_PUBLIC_ED_KEY` in `bin/make-app.sh` and commit it. It's safe to be public.
 - For CI, export the **private** key and store it as the `SPARKLE_ED_PRIVATE_KEY` GitHub secret:
   ```bash
   .build/artifacts/sparkle/Sparkle/bin/generate_keys -x sparkle_private_key.pem   # writes the private key to a file
@@ -123,7 +127,7 @@ And make sure `SU_PUBLIC_ED_KEY` in `bin/make-app.sh` holds your real Sparkle pu
 
 ## Architecture
 
-A custom `NSStatusItem` (menu + drag destination) drives three `@MainActor` coordinators — `NotePanelController`, `RegionCaptureController`, `DropController` — that all call one stateless `MyMindClient` (URLSession + HS256 JWT signer + hand-built multipart + single-retry rate-limit backoff). No local database; settings in `UserDefaults`, the API secret in Keychain. See `docs/PRD.md` for the full specification and `docs/superpowers/plans/` for the implementation plan.
+A custom `NSStatusItem` (menu + drag destination) drives three `@MainActor` coordinators — `NotePanelController`, `RegionCaptureController`, `DropController` — that all call one stateless `MyMindClient` (URLSession + HS256 JWT signer + hand-built multipart + single-retry rate-limit backoff). No local database; settings in `UserDefaults`, the API secret in Keychain.
 
 Dependencies: [KeyboardShortcuts](https://github.com/sindresorhus/KeyboardShortcuts) (global hotkeys) and [Sparkle](https://github.com/sparkle-project/Sparkle) (updates). JWT signing uses CryptoKit; no other third-party libraries.
 
