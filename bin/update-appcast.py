@@ -58,6 +58,10 @@ def main() -> None:
     parser.add_argument("--signature", required=True,
                         help="Either the raw 'sparkle:edSignature=...' line or just the signature value.")
     parser.add_argument("--release-notes-url")
+    parser.add_argument("--release-notes-file",
+                        help="Path to an HTML file with the release notes. When given, the "
+                             "notes are embedded in <description> and shown inline by Sparkle "
+                             "(this takes precedence over --release-notes-url).")
     parser.add_argument("--min-system-version", default="15.0")
     args = parser.parse_args()
 
@@ -91,11 +95,21 @@ def main() -> None:
         "%a, %d %b %Y %H:%M:%S +0000"
     )
 
+    notes_html = ""
+    if args.release_notes_file and os.path.exists(args.release_notes_file):
+        with open(args.release_notes_file, "r", encoding="utf-8") as fh:
+            notes_html = fh.read().strip()
+
     item = ET.Element("item")
     title = ET.SubElement(item, "title")
     title.text = f"Version {args.version}"
 
-    if args.release_notes_url:
+    # Embedded notes render inline in Sparkle's update window; an external link makes
+    # Sparkle load the URL instead. Prefer embedded notes when we have them.
+    if notes_html:
+        description = ET.SubElement(item, "description")
+        description.text = notes_html
+    elif args.release_notes_url:
         notes_link = ET.SubElement(item, f"{{{SPARKLE_NS}}}releaseNotesLink")
         notes_link.text = args.release_notes_url
 

@@ -159,6 +159,13 @@ jobs:
           notes_url="https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
           length=$(stat -f%z "$ARTIFACT")
 
+          # Render the release body (Markdown) to HTML so Sparkle can show it inline.
+          notes_html="$RUNNER_TEMP/release-notes.html"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json body -q .body > "$RUNNER_TEMP/release-notes.md" || true
+          if [ -s "$RUNNER_TEMP/release-notes.md" ]; then
+              gh api --method POST /markdown -f mode=gfm -f text="$(cat "$RUNNER_TEMP/release-notes.md")" > "$notes_html" || rm -f "$notes_html"
+          fi
+
           mkdir -p "$RUNNER_TEMP/pages"
           cd "$RUNNER_TEMP/pages"
 
