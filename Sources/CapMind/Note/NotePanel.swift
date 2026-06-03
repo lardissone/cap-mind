@@ -4,20 +4,20 @@ final class NotePanel: NSPanel {
     init(contentRect: NSRect) {
         super.init(
             contentRect: contentRect,
-            styleMask: [.nonactivatingPanel, .titled, .fullSizeContentView],
+            styleMask: [.titled, .closable, .resizable, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         isFloatingPanel = true
         level = .floating
-        titlebarAppearsTransparent = true
+        titlebarAppearsTransparent = false
         titleVisibility = .hidden
         hidesOnDeactivate = false
         isReleasedWhenClosed = false
-        isMovableByWindowBackground = true
+        minSize = NSSize(width: 300, height: 200)
         animationBehavior = .utilityWindow
     }
 
     override var canBecomeKey: Bool { true }
-    override var canBecomeMain: Bool { false }
+    override var canBecomeMain: Bool { true }
 }

@@ -45,6 +45,23 @@ final class AppSettings: CredentialsProviding, @unchecked Sendable {
         }
     }
 
+    /// Last note-panel content size, persisted so a resized window is restored across
+    /// invocations and sessions.
+    var savedWindowSize: NSSize? {
+        get {
+            guard let s = defaults.string(forKey: Keys.savedWindowSize) else { return nil }
+            let parsed = NSSizeFromString(s)
+            return (parsed.width <= 0 || parsed.height <= 0) ? nil : parsed
+        }
+        set {
+            if let size = newValue {
+                defaults.set(NSStringFromSize(size), forKey: Keys.savedWindowSize)
+            } else {
+                defaults.removeObject(forKey: Keys.savedWindowSize)
+            }
+        }
+    }
+
     // MARK: - Keychain-backed secret
 
     /// Reads the API secret from the macOS Keychain. Returns `nil` when not set.
@@ -86,5 +103,6 @@ final class AppSettings: CredentialsProviding, @unchecked Sendable {
         static let panelPosition = "panelPosition"
         static let alwaysOnTop = "alwaysOnTop"
         static let savedWindowOrigin = "savedWindowOrigin"
+        static let savedWindowSize = "savedWindowSize"
     }
 }

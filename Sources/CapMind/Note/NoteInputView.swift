@@ -5,6 +5,7 @@ struct NoteInputView: View {
     @Bindable var appState: AppState
     let onSubmit: () -> Void
     let onCancel: () -> Void
+    let onOpenSettings: () -> Void
 
     private static let editorPadding = EdgeInsets(top: 14, leading: 14, bottom: 8, trailing: 14)
     private static let editorFont = NSFont.systemFont(ofSize: NSFont.systemFontSize + 2)
@@ -39,11 +40,13 @@ struct NoteInputView: View {
         HStack(spacing: 8) {
             statusLabel
             Spacer(minLength: 8)
-            HStack(spacing: 4) {
-                Image(systemName: "command")
-                Text("Return to send")
+            Button(action: onOpenSettings) {
+                Image(systemName: "gearshape")
+                    .imageScale(.medium)
             }
-            .foregroundStyle(.tertiary)
+            .buttonStyle(.plain)
+            .foregroundStyle(.secondary)
+            .help("Settings")
         }
         .font(.callout)
         .padding(.horizontal, 14)
@@ -55,7 +58,11 @@ struct NoteInputView: View {
     private var statusLabel: some View {
         switch appState.sendStatus {
         case .idle:
-            EmptyView()
+            HStack(spacing: 4) {
+                Image(systemName: "command")
+                Text("Return to send")
+            }
+            .foregroundStyle(.secondary)
         case .sending:
             HStack(spacing: 6) {
                 ProgressView().controlSize(.small)

@@ -37,6 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
 
         notePanelController = NotePanelController(client: client, settings: settings, appState: appState)
+        notePanelController.onOpenSettings = { [weak self] in
+            self?.settingsWindowController.show()
+        }
 
         regionCaptureController = RegionCaptureController(client: client) { [weak self] result in
             guard let self else { return }

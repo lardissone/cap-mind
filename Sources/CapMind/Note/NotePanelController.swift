@@ -9,6 +9,9 @@ final class NotePanelController: NSObject {
 
     private var panel: NotePanel?
 
+    /// Opens the Settings window; wired by the app delegate. Triggered by the footer gear.
+    var onOpenSettings: (() -> Void)?
+
     private let defaultSize = NSSize(width: 480, height: 260)
 
     init(client: MyMindClient, settings: AppSettings, appState: AppState) {
@@ -90,7 +93,8 @@ final class NotePanelController: NSObject {
                 self?.appState.noteText = ""
                 self?.appState.sendStatus = .idle
                 self?.hide()
-            }
+            },
+            onOpenSettings: { [weak self] in self?.onOpenSettings?() }
         )
         let hosting = NSHostingView(rootView: view)
         hosting.autoresizingMask = [.width, .height]
@@ -101,19 +105,18 @@ final class NotePanelController: NSObject {
     }
 
     private func positionPanel(_ panel: NotePanel) {
+        // Restore a resized window; position still follows the chosen mode.
+        panel.setContentSize(settings.savedWindowSize ?? defaultSize)
+
         switch settings.panelPosition {
         case .centered:
-            panel.setContentSize(defaultSize)
             panel.center()
         case .atCursor:
-            panel.setContentSize(defaultSize)
             positionAtCursor(panel)
         case .lastUsed:
             if let origin = settings.savedWindowOrigin {
-                panel.setContentSize(defaultSize)
                 panel.setFrameOrigin(clampOriginToVisibleScreen(origin, size: panel.frame.size))
             } else {
-                panel.setContentSize(defaultSize)
                 panel.center()
             }
         }
@@ -155,19 +158,30 @@ final class NotePanelController: NSObject {
 extension NotePanelController: NSWindowDelegate {
     nonisolated func windowDidMove(_ notification: Notification) {
         Task { @MainActor in
-            self.persistCurrentOrigin()
+            self.persistCurrentFrame()
         }
     }
 
     nonisolated func windowDidResize(_ notification: Notification) {
         Task { @MainActor in
-            self.persistCurrentOrigin()
+            self.persistCurrentFrame()
         }
     }
 
+    /// Closing via the title-bar button discards the draft, matching Esc, so reopening
+    /// starts empty.
+    nonisolated func windowShouldClose(_ sender: NSWindow) -> Bool {
+        Task { @MainActor in
+            self.appState.noteText = ""
+            self.appState.sendStatus = .idle
+        }
+        return true
+    }
+
     @MainActor
-    private func persistCurrentOrigin() {
+    private func persistCurrentFrame() {
         guard let panel else { return }
         settings.savedWindowOrigin = panel.frame.origin
+        settings.savedWindowSize = panel.contentRect(forFrameRect: panel.frame).size
     }
 }
