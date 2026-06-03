@@ -50,27 +50,29 @@ final class StatusItemController: NSObject {
     func setIcon(_ icon: Icon) {
         guard let button = statusItem.button else { return }
 
-        let isFilled = settings.iconStyle == .filled
-
         let symbolName: String
         let tintColor: NSColor?
 
         switch icon {
         case .normal:
-            symbolName = isFilled ? "tray.fill" : "tray"
+            symbolName = "figure.mind.and.body"
             tintColor = nil
         case .attention:
-            symbolName = isFilled ? "tray.fill" : "tray"
+            symbolName = "figure.mind.and.body"
             tintColor = .systemRed
         case .sending:
-            symbolName = isFilled ? "arrow.up.circle.fill" : "arrow.up.circle"
+            symbolName = "arrow.up.circle"
             tintColor = nil
         case .aboutToReceive:
-            symbolName = isFilled ? "tray.and.arrow.down.fill" : "tray.and.arrow.down"
+            symbolName = "tray.and.arrow.down"
             tintColor = nil
         }
 
-        button.image = NSImage(systemSymbolName: symbolName, accessibilityDescription: AppConstants.appName)
+        let config = NSImage.SymbolConfiguration(pointSize: 16, weight: .regular)
+        let image = NSImage(systemSymbolName: symbolName, accessibilityDescription: AppConstants.appName)?
+            .withSymbolConfiguration(config)
+        image?.isTemplate = true
+        button.image = image
         button.contentTintColor = tintColor
     }
 

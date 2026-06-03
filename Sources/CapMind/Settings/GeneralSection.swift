@@ -2,7 +2,6 @@ import SwiftUI
 
 struct GeneralSection: View {
     @Bindable var settings: AppSettings
-    let onIconStyleChanged: () -> Void
 
     @State private var launchAtLoginEnabled: Bool = LaunchAtLogin.isEnabled
     @State private var launchAtLoginError: String?
@@ -30,19 +29,11 @@ struct GeneralSection: View {
                             .foregroundStyle(.red)
                     }
                 }
-
-                Picker("Icon style", selection: $settings.iconStyle) {
-                    Text("Outline").tag(IconStyle.outline)
-                    Text("Filled").tag(IconStyle.filled)
-                }
-                .pickerStyle(.menu)
-                .onChange(of: settings.iconStyle) { _, _ in
-                    onIconStyleChanged()
-                }
             }
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .groupBoxStyle(PlainGroupBoxStyle())
         .onAppear {
             launchAtLoginEnabled = LaunchAtLogin.isEnabled
         }

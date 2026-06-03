@@ -10,13 +10,6 @@ enum PanelPosition: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-enum IconStyle: String, CaseIterable, Identifiable {
-    case outline
-    case filled
-
-    var id: String { rawValue }
-}
-
 /// `@unchecked Sendable` because all mutation happens on the main actor via
 /// `@Observable`; `currentCredentials()` returns a value-type snapshot so
 /// no mutable state crosses isolation boundaries.
@@ -34,10 +27,6 @@ final class AppSettings: CredentialsProviding, @unchecked Sendable {
 
     var alwaysOnTop: Bool {
         didSet { defaults.set(alwaysOnTop, forKey: Keys.alwaysOnTop) }
-    }
-
-    var iconStyle: IconStyle {
-        didSet { defaults.set(iconStyle.rawValue, forKey: Keys.iconStyle) }
     }
 
     /// Last window origin, persisted for the `lastUsed` panel position mode.
@@ -88,8 +77,6 @@ final class AppSettings: CredentialsProviding, @unchecked Sendable {
         panelPosition = PanelPosition(rawValue: defaults.string(forKey: Keys.panelPosition) ?? "")
             ?? .lastUsed
         alwaysOnTop = defaults.object(forKey: Keys.alwaysOnTop) as? Bool ?? true
-        iconStyle = IconStyle(rawValue: defaults.string(forKey: Keys.iconStyle) ?? "")
-            ?? .outline
     }
 
     // MARK: - Keys
@@ -98,7 +85,6 @@ final class AppSettings: CredentialsProviding, @unchecked Sendable {
         static let keyID = "keyID"
         static let panelPosition = "panelPosition"
         static let alwaysOnTop = "alwaysOnTop"
-        static let iconStyle = "iconStyle"
         static let savedWindowOrigin = "savedWindowOrigin"
     }
 }
