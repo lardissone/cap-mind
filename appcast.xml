@@ -6,6 +6,13 @@
         <description>Quick captures to your mind, from your menu bar.</description>
         <language>en</language>
         <item>
+            <title>Version 0.1.4</title>
+            <description>&lt;p&gt;&lt;strong&gt;Full Changelog&lt;/strong&gt;: &lt;a class="commit-link" href="https://github.com/lardissone/cap-mind/compare/v0.1.3...v0.1.4"&gt;lardissone/cap-mind@&lt;tt&gt;v0.1.3...v0.1.4&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</description>
+            <pubDate>Wed, 03 Jun 2026 18:06:02 +0000</pubDate>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/lardissone/cap-mind/releases/download/v0.1.4/CapMind-0.1.4.zip" sparkle:version="0.1.4" sparkle:shortVersionString="0.1.4" length="1766068" type="application/octet-stream" sparkle:edSignature="CEGoD+r1/SEuus/Qh8cJi0m0yT3BSt8/AkaxRoyczJEd3u5Xloma6+TvOYZmSOz0uVcWo2c05thp0hbklixmAQ==" />
+        </item>
+        <item>
             <title>Version 0.1.3</title>
             <description>&lt;p&gt;&lt;strong&gt;Full Changelog&lt;/strong&gt;: &lt;a class="commit-link" href="https://github.com/lardissone/cap-mind/compare/v0.1.2...v0.1.3"&gt;lardissone/cap-mind@&lt;tt&gt;v0.1.2...v0.1.3&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</description>
             <pubDate>Wed, 03 Jun 2026 16:56:03 +0000</pubDate>
