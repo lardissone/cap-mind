@@ -21,7 +21,7 @@ CapMind is write-only: it never lists, searches, or shows your existing MyMind o
 
 ## Install
 
-Download the latest signed, notarized build from [Releases](https://github.com/lardissone/cap-mind/releases), unzip, and move `CapMind.app` to `/Applications`. CapMind auto-updates via [Sparkle](https://sparkle-project.org/).
+Download the latest build from [Releases](https://github.com/lardissone/cap-mind/releases), unzip, and drag `CapMind.app` to `/Applications`. It updates itself automatically.
 
 On first launch there's no window and no Dock icon — look for the tray icon in the menu bar (it starts red, meaning "not configured yet").
 
