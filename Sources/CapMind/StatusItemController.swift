@@ -226,7 +226,18 @@ final class StatusItemController: NSObject {
     }
 
     @objc private func handleAbout() {
-        NSApplication.shared.orderFrontStandardAboutPanel(nil)
+        // The app is an accessory (no Dock icon), so the panel can open behind other
+        // apps unless we activate first.
+        NSApp.activate(ignoringOtherApps: true)
+
+        // The standard panel renders "Version {CFBundleShortVersionString} ({CFBundleVersion})".
+        // Both bundle values hold the same semantic version, so suppress the redundant
+        // parenthetical build string and show the version once.
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "dev"
+        NSApp.orderFrontStandardAboutPanel(options: [
+            .applicationVersion: version,
+            .version: "",
+        ])
     }
 
     @objc private func handleQuit() {
