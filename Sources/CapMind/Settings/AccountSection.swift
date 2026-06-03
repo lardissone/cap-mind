@@ -93,6 +93,7 @@ struct AccountSection: View {
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .groupBoxStyle(PlainGroupBoxStyle())
         .onAppear {
             keyIDInput = settings.keyID
         }
