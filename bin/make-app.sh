@@ -28,7 +28,7 @@ CODESIGN_IDENTITY="${CODESIGN_IDENTITY:--}"
 # Generate your own keypair once with Sparkle's `generate_keys` tool and
 # paste the printed public key here (the private key stays in your login
 # keychain / the SPARKLE_ED_PRIVATE_KEY GitHub secret).
-SU_PUBLIC_ED_KEY="REPLACE_WITH_YOUR_SPARKLE_ED_PUBLIC_KEY"
+SU_PUBLIC_ED_KEY="SrfAn540iTdY174yQhMIyqSoAkCwh66UDziuy8EPwxQ="
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"

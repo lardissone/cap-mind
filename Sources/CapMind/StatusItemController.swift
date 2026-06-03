@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 
 @MainActor
 final class StatusItemController: NSObject {
@@ -109,14 +110,16 @@ final class StatusItemController: NSObject {
 
         m.addItem(.separator())
 
-        // New note
+        // New note — shows the user's recorded shortcut, kept in sync automatically.
         let newNoteItem = NSMenuItem(title: "New note", action: #selector(handleNewNote), keyEquivalent: "")
         newNoteItem.target = self
+        newNoteItem.setShortcut(for: .openNote)
         m.addItem(newNoteItem)
 
         // Capture region
         let captureItem = NSMenuItem(title: "Capture region", action: #selector(handleCaptureRegion), keyEquivalent: "")
         captureItem.target = self
+        captureItem.setShortcut(for: .captureRegion)
         m.addItem(captureItem)
 
         m.addItem(.separator())
@@ -147,11 +150,12 @@ final class StatusItemController: NSObject {
         quitItem.target = self
         m.addItem(quitItem)
 
-        // NOTE: We intentionally do NOT assign `statusItem.menu = m` here.
-        // Doing so causes AppKit to intercept mouseDown on the button to open the menu,
-        // which prevents NSDraggingDestination from receiving drag events on StatusItemDropView.
-        // Instead, we keep the menu reference and pop it manually from StatusItemDropView.onClick.
-        // See StatusItemDropView for the full explanation and tradeoff note.
+        m.delegate = self
+
+        // We keep the menu in a property rather than assigning `statusItem.menu`
+        // permanently: a persistent menu makes AppKit intercept the button's mouseDown
+        // and swallow the drag events StatusItemDropView needs. `showMenu()` assigns it
+        // only transiently per click. See StatusItemDropView for the full explanation.
         self.menu = m
     }
 
@@ -188,16 +192,17 @@ final class StatusItemController: NSObject {
 
     // MARK: - Manual menu presentation
 
-    /// Pops the menu below the status-item button without requiring `statusItem.menu` to be set.
+    /// Shows the menu using AppKit's native status-item presentation.
     ///
-    /// `NSMenu.popUp(positioning:at:in:)` is the documented way to show a menu at an arbitrary
-    /// location.  The only visual difference from the native path is that the menu-bar button
-    /// does not receive the system highlight appearance while the menu is open.
-    /// See `StatusItemDropView` for the full tradeoff discussion.
+    /// Assigning `statusItem.menu` is what gives correct positioning (dropping below
+    /// the menu bar) and the system highlight appearance. It normally also makes AppKit
+    /// intercept the button's `mouseDown`, which would swallow the drag events the drop
+    /// view needs — so we assign it only for the duration of this synchronous click and
+    /// clear it immediately, leaving `statusItem.menu` nil at rest so drops keep working.
     private func showMenu() {
-        guard let button = statusItem.button else { return }
-        // Anchor below the bottom-left corner of the button in screen coordinates.
-        menu.popUp(positioning: nil, at: NSPoint(x: 0, y: button.bounds.height + 2), in: button)
+        statusItem.menu = menu
+        statusItem.button?.performClick(nil)
+        statusItem.menu = nil
     }
 
     // MARK: - Menu actions
@@ -230,5 +235,20 @@ final class StatusItemController: NSObject {
 
     func setStatusLine(_ text: String) {
         statusLine?.title = text
+    }
+}
+
+// MARK: - NSMenuDelegate
+
+extension StatusItemController: NSMenuDelegate {
+    /// While the menu is open `NSMenu` puts the thread in tracking mode, which buffers
+    /// global hotkey events and fires them when the menu closes. Disabling the shortcuts
+    /// for the menu's lifetime prevents that; the menu items' own key equivalents still work.
+    func menuWillOpen(_ menu: NSMenu) {
+        KeyboardShortcuts.disable(.openNote, .captureRegion)
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        KeyboardShortcuts.enable(.openNote, .captureRegion)
     }
 }

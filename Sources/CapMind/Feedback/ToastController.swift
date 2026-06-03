@@ -55,28 +55,26 @@ private struct ToastContentView: View {
 
 // MARK: - ToastController
 
-/// Shows a small status popover anchored to the menu-bar status-item button.
+/// Shows a small HUD-style toast floating at the bottom-center of the active screen.
 ///
 /// - `progress` style: stays until `update(_:)` or `dismiss()` is called.
 /// - `success` style: auto-dismisses after the requested interval (default 1.5 s).
-/// - `error` style: persists until the user clicks the popover or `dismiss()` is called.
+/// - `error` style: persists until the user clicks the toast or `dismiss()` is called.
 @MainActor
 final class ToastController {
 
     // MARK: - State
 
-    private var popover: NSPopover?
+    private var panel: NSPanel?
+    private var hostingView: NSHostingView<ToastContentView>?
     private var currentMessage: String = ""
     private var currentStyle: ToastStyle = .progress
     private var autoDismissTask: Task<Void, Never>?
 
-    // MARK: - Button provider
+    /// Distance from the bottom of the screen's visible frame to the toast.
+    private let bottomMargin: CGFloat = 90
 
-    private let buttonProvider: () -> NSStatusBarButton?
-
-    init(buttonProvider: @escaping () -> NSStatusBarButton?) {
-        self.buttonProvider = buttonProvider
-    }
+    init() {}
 
     // MARK: - Public API
 
@@ -85,11 +83,10 @@ final class ToastController {
         currentMessage = message
         currentStyle = style
 
-        if let existing = popover, existing.isShown {
-            // Already visible — refresh content in place.
+        if panel != nil {
             refreshContent()
         } else {
-            presentPopover()
+            presentPanel()
         }
 
         if let interval {
@@ -98,7 +95,7 @@ final class ToastController {
     }
 
     func update(_ message: String) {
-        guard let p = popover, p.isShown else {
+        guard panel != nil else {
             show(message, style: .progress, autoDismissAfter: nil)
             return
         }
@@ -108,36 +105,81 @@ final class ToastController {
 
     func dismiss() {
         cancelAutoDismiss()
-        popover?.close()
-        popover = nil
+        panel?.orderOut(nil)
+        panel = nil
+        hostingView = nil
     }
 
     // MARK: - Private helpers
 
-    private func presentPopover() {
-        guard let button = buttonProvider() else { return }
+    private func presentPanel() {
+        let hosting = NSHostingView(rootView: makeContentView())
+        hosting.translatesAutoresizingMaskIntoConstraints = false
 
-        let p = NSPopover()
-        p.behavior = .transient
-        p.animates = true
-        p.contentViewController = makeContentVC()
-        p.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        popover = p
+        let effect = NSVisualEffectView()
+        effect.material = .hudWindow
+        effect.blendingMode = .behindWindow
+        effect.state = .active
+        effect.wantsLayer = true
+        effect.layer?.cornerRadius = 12
+        effect.layer?.masksToBounds = true
+        effect.translatesAutoresizingMaskIntoConstraints = false
+        effect.addSubview(hosting)
+        NSLayoutConstraint.activate([
+            hosting.leadingAnchor.constraint(equalTo: effect.leadingAnchor),
+            hosting.trailingAnchor.constraint(equalTo: effect.trailingAnchor),
+            hosting.topAnchor.constraint(equalTo: effect.topAnchor),
+            hosting.bottomAnchor.constraint(equalTo: effect.bottomAnchor)
+        ])
+
+        let p = NSPanel(
+            contentRect: .zero,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        p.isFloatingPanel = true
+        p.level = .statusBar
+        p.hidesOnDeactivate = false
+        p.isOpaque = false
+        p.backgroundColor = .clear
+        p.hasShadow = true
+        p.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .ignoresCycle]
+        p.contentView = effect
+
+        panel = p
+        hostingView = hosting
+        layoutAndPosition()
+        p.orderFrontRegardless()
     }
 
     private func refreshContent() {
-        popover?.contentViewController = makeContentVC()
+        hostingView?.rootView = makeContentView()
+        layoutAndPosition()
     }
 
-    private func makeContentVC() -> NSViewController {
-        let view = ToastContentView(
+    private func makeContentView() -> ToastContentView {
+        ToastContentView(
             message: currentMessage,
             style: currentStyle,
             onDismiss: { [weak self] in self?.dismiss() }
         )
-        let hosting = NSHostingController(rootView: view)
-        hosting.view.translatesAutoresizingMaskIntoConstraints = false
-        return hosting
+    }
+
+    /// Sizes the panel to its content and centers it near the bottom of the active screen.
+    private func layoutAndPosition() {
+        guard let panel, let hostingView else { return }
+        let size = hostingView.fittingSize
+        guard let screen = NSScreen.main else {
+            panel.setContentSize(size)
+            return
+        }
+        let visible = screen.visibleFrame
+        let origin = NSPoint(
+            x: visible.midX - size.width / 2,
+            y: visible.minY + bottomMargin
+        )
+        panel.setFrame(NSRect(origin: origin, size: size), display: true)
     }
 
     private func scheduleAutoDismiss(after interval: TimeInterval) {

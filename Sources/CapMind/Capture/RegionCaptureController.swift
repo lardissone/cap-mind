@@ -47,6 +47,10 @@ final class RegionCaptureController {
     private func showOverlays() {
         teardown()
 
+        // Bring the app forward so the overlay windows can become key and receive
+        // the first click without an extra activating tap.
+        NSApp.activate(ignoringOtherApps: true)
+
         NSCursor.crosshair.push()
 
         for screen in NSScreen.screens {

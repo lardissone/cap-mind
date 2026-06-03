@@ -27,9 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusController = StatusItemController(settings: settings)
 
-        toastController = ToastController(buttonProvider: { [weak self] in
-            self?.statusController.statusBarButton
-        })
+        toastController = ToastController()
 
         settingsWindowController = SettingsWindowController(
             settings: settings,

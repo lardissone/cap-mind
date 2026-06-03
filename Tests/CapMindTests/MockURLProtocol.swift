@@ -31,6 +31,6 @@ final class MockURLProtocol: URLProtocol {
 }
 
 struct StubCredentials: CredentialsProviding {
-    var creds: MyMindCredentials? = .init(keyID: "k", secret: "s")
+    var creds: MyMindCredentials? = .init(keyID: "k", secret: "c2VjcmV0LWtleS1ieXRlcw==")
     func currentCredentials() -> MyMindCredentials? { creds }
 }

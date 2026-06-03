@@ -79,6 +79,11 @@ final class OverlayView: NSView {
 
     override var acceptsFirstResponder: Bool { true }
 
+    /// Deliver the very first click to the view even when the overlay window is not
+    /// yet key — otherwise the initial mouse-down is swallowed activating the window
+    /// and the user has to click a second time to start a selection.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     override func layout() {
         super.layout()
         dimLayer.frame = bounds
