@@ -6,6 +6,13 @@
         <description>Quick captures to your mind, from your menu bar.</description>
         <language>en</language>
         <item>
+            <title>Version 0.1.3</title>
+            <description>&lt;p&gt;&lt;strong&gt;Full Changelog&lt;/strong&gt;: &lt;a class="commit-link" href="https://github.com/lardissone/cap-mind/compare/v0.1.2...v0.1.3"&gt;lardissone/cap-mind@&lt;tt&gt;v0.1.2...v0.1.3&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</description>
+            <pubDate>Wed, 03 Jun 2026 16:56:03 +0000</pubDate>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/lardissone/cap-mind/releases/download/v0.1.3/CapMind-0.1.3.zip" sparkle:version="0.1.3" sparkle:shortVersionString="0.1.3" length="1760049" type="application/octet-stream" sparkle:edSignature="mg5vbO1wPF84+scUxWW96or7HbhFzSqTcqDz585itWjGZe1JXDgBj45qs56CY04bzTU058r4SAmH7u3VYOzbBw==" />
+        </item>
+        <item>
             <title>Version 0.1.2</title>
             <sparkle:releaseNotesLink>https://github.com/lardissone/cap-mind/releases/tag/v0.1.2</sparkle:releaseNotesLink>
             <pubDate>Wed, 03 Jun 2026 16:52:33 +0000</pubDate>
