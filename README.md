@@ -2,11 +2,12 @@
 
 > Working title — likely rebranded before the first public release. The name lives behind constants in `Sources/CapMind/AppConstants.swift`, so a global rename is a find-and-replace.
 
-A macOS menu-bar app that sends content to [MyMind](https://mymind.com) with zero friction — no browser, no organizing step. Three ways in:
+A macOS menu-bar app that sends content to [MyMind](https://mymind.com) with zero friction — no browser, no organizing step. Four ways in:
 
 - **Text note** — a global hotkey opens a small floating editor; type, `⌘↩`, done.
 - **Region screenshot** — a global hotkey gives you a crosshair; drag a region and it uploads as a native-resolution PNG.
 - **Drag-and-drop** — drop files, a URL, selected text, or an image onto the menu-bar icon.
+- **Right-click → Services** — select text, a link, an image, or files in Finder and choose **Add to MyMind** from the macOS Services menu.
 
 CapMind is write-only: it never lists, searches, or shows your existing MyMind objects. It's the sibling of [CapNote](https://github.com/lardissone/cap-note) (same idea, for Capacities) and reuses its architecture, UI patterns, and build pipeline.
 
@@ -38,6 +39,7 @@ On first launch there's no window and no Dock icon — look for the tray icon in
 | New note | `⌘⇧⌥M` | Floating editor. `⌘↩` send · `Esc` discard. |
 | Capture region | `⌘⇧⌥S` | Drag a rectangle; `Esc` cancels. Uploads PNG at native resolution. |
 | Drag-and-drop | — | Drop onto the menu-bar icon. Multiple items upload serially with a progress toast. |
+| Add to MyMind | — | Select text, a link, an image, or files anywhere, then right-click → **Services → Add to MyMind** (or the app's **Services** menu). |
 
 Both shortcuts are configurable in **Settings → Shortcuts**.
 
@@ -45,7 +47,9 @@ Both shortcuts are configurable in **Settings → Shortcuts**.
 
 > **Screen Recording permission:** the first region capture triggers macOS's Screen Recording prompt. If you decline, CapMind shows an alert linking straight to **System Settings → Privacy & Security → Screen Recording** — enable CapMind there and try again.
 
-Supported drop formats (per [MyMind](https://access.mymind.com/api/supported-formats), 64 MB cap): jpg, jpeg, png, gif, webp, avif, heif/heic, jxl, bmp, tiff, psd, svg, txt, md, pdf. A dragged web link is sent as a URL; selected text is sent as Markdown; oversized or unsupported files are rejected before any upload with a clear toast.
+Supported drop formats (per [MyMind](https://access.mymind.com/api/supported-formats), 64 MB cap): jpg, jpeg, png, gif, webp, avif, heif/heic, jxl, bmp, tiff, psd, svg, txt, md, pdf. A web link is sent as a URL; selected text is sent as Markdown (formatting preserved); oversized or unsupported files are rejected before any upload with a clear toast. The drag-and-drop and **Add to MyMind** Services route share the same handling.
+
+> **"Add to MyMind" missing from the Services menu?** macOS makes third-party services opt-in. Open **System Settings → Keyboard → Keyboard Shortcuts → Services** and tick **Add to MyMind**. It's listed under the **Pictures** section (not Text), because it also accepts images and files. To use it from the right-click menu specifically, make sure the **context menu** checkbox is enabled too. If it still doesn't show, log out and back in — that rebuilds the system's Services cache.
 
 ## Build from source
 

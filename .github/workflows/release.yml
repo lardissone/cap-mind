@@ -155,6 +155,15 @@ jobs:
             "${{ steps.stage.outputs.artifact }}" \
             "${{ steps.stage.outputs.artifact }}.sha256"
 
+          # Append the standing setup/troubleshooting footer to the generated
+          # notes so it reaches both the release page and Sparkle's update dialog.
+          footer="$GITHUB_WORKSPACE/.github/release-footer.md"
+          if [[ -f "$footer" ]]; then
+            generated="$(gh release view "$TAG" --json body -q .body)"
+            printf '%s\n\n%s\n' "$generated" "$(cat "$footer")" \
+              | gh release edit "$TAG" --notes-file -
+          fi
+
       - name: Update Sparkle appcast on gh-pages
         # Skip pre-release tags so they reach only people who download them
         # directly, never the auto-update feed.
