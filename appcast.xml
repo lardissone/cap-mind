@@ -6,6 +6,24 @@
         <description>Quick captures to your mind, from your menu bar.</description>
         <language>en</language>
         <item>
+            <title>Version 0.1.5</title>
+            <description>&lt;h2&gt;What's Changed&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;feat: "Add to MyMind" macOS Services menu entry by &lt;a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/lardissone/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/lardissone"&gt;@lardissone&lt;/a&gt; in &lt;a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="4614140617" data-permission-text="Title is private" data-url="https://github.com/lardissone/cap-mind/issues/1" data-hovercard-type="pull_request" data-hovercard-url="/lardissone/cap-mind/pull/1/hovercard" href="https://github.com/lardissone/cap-mind/pull/1"&gt;lardissone/cap-mind#1&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;New Contributors&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;&lt;a class="user-mention notranslate" data-hovercard-type="user" data-hovercard-url="/users/lardissone/hovercard" data-octo-click="hovercard-link-click" data-octo-dimensions="link_type:self" href="https://github.com/lardissone"&gt;@lardissone&lt;/a&gt; made their first contribution in &lt;a class="issue-link js-issue-link" data-error-text="Failed to load title" data-id="4614140617" data-permission-text="Title is private" data-url="https://github.com/lardissone/cap-mind/issues/1" data-hovercard-type="pull_request" data-hovercard-url="/lardissone/cap-mind/pull/1/hovercard" href="https://github.com/lardissone/cap-mind/pull/1"&gt;lardissone/cap-mind#1&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;strong&gt;Full Changelog&lt;/strong&gt;: &lt;a class="commit-link" href="https://github.com/lardissone/cap-mind/compare/v0.1.4...v0.1.5"&gt;lardissone/cap-mind@&lt;tt&gt;v0.1.4...v0.1.5&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;hr&gt;
+&lt;h3&gt;Enabling "Add to MyMind" (Services menu)&lt;/h3&gt;
+&lt;p&gt;macOS makes third-party services opt-in. After updating, enable it in &lt;strong&gt;System Settings → Keyboard → Keyboard Shortcuts → Services&lt;/strong&gt; by ticking &lt;strong&gt;Add to MyMind&lt;/strong&gt;. It's listed under the &lt;strong&gt;Pictures&lt;/strong&gt; section (not Text), because it also accepts images and files. For the right-click menu, enable the &lt;strong&gt;context menu&lt;/strong&gt; checkbox too. If it still doesn't appear, log out and back in to rebuild the system's Services cache.&lt;/p&gt;</description>
+            <pubDate>Mon, 08 Jun 2026 19:34:40 +0000</pubDate>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/lardissone/cap-mind/releases/download/v0.1.5/CapMind-0.1.5.zip" sparkle:version="0.1.5" sparkle:shortVersionString="0.1.5" length="1774145" type="application/octet-stream" sparkle:edSignature="r93Xyf2NdSgii3Pv6D1q+qy6n5ROHLxQh5o91sM89cTAFhidnGJBbYvqZFpOp133CdbJzQlQoHqRnmXEQ6O2AA==" />
+        </item>
+        <item>
             <title>Version 0.1.4</title>
             <description>&lt;p&gt;&lt;strong&gt;Full Changelog&lt;/strong&gt;: &lt;a class="commit-link" href="https://github.com/lardissone/cap-mind/compare/v0.1.3...v0.1.4"&gt;lardissone/cap-mind@&lt;tt&gt;v0.1.3...v0.1.4&lt;/tt&gt;&lt;/a&gt;&lt;/p&gt;</description>
             <pubDate>Wed, 03 Jun 2026 18:06:02 +0000</pubDate>
