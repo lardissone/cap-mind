@@ -18,6 +18,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var dropController: DropController!
     private var settingsWindowController: SettingsWindowController!
     private var toastController: ToastController!
+    private var servicesProvider: ServicesProvider!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -117,14 +118,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         statusController.onDrop = { [weak self] pasteboard in
-            guard let self else { return }
-            guard self.settings.isConfigured else {
-                self.toastController.show("Set up your MyMind access key in Settings", style: .error, autoDismissAfter: nil)
-                self.settingsWindowController.show()
-                return
-            }
-            self.dropController.handle(pasteboard)
+            self?.handleIncomingPasteboard(pasteboard)
         }
+
+        servicesProvider = ServicesProvider()
+        servicesProvider.onPerform = { [weak self] pasteboard in
+            self?.handleIncomingPasteboard(pasteboard)
+        }
+        servicesProvider.register()
 
         statusController.onOpenSettings = { [weak self] in
             self?.settingsWindowController.show()
@@ -185,6 +186,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     // MARK: - Helpers
+
+    /// Shared entry point for both the menu-bar drop target and the Services menu:
+    /// gate on configuration, then hand the pasteboard to the upload pipeline.
+    private func handleIncomingPasteboard(_ pasteboard: NSPasteboard) {
+        guard settings.isConfigured else {
+            toastController.show("Set up your MyMind access key in Settings", style: .error, autoDismissAfter: nil)
+            settingsWindowController.show()
+            return
+        }
+        dropController.handle(pasteboard)
+    }
 
     /// Fix C: Updates the menu-bar status line (the disabled top item in the menu).
     private func reflect(_ text: String) {
