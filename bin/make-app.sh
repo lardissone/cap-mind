@@ -174,6 +174,36 @@ $ICON_PLIST_ENTRIES
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>NSServices</key>
+    <array>
+        <dict>
+            <key>NSMenuItem</key>
+            <dict>
+                <key>default</key>
+                <string>Add to MyMind</string>
+            </dict>
+            <key>NSMessage</key>
+            <string>addToMyMind</string>
+            <key>NSPortName</key>
+            <string>$APP_NAME</string>
+            <key>NSSendTypes</key>
+            <array>
+                <string>public.utf8-plain-text</string>
+                <string>public.rtf</string>
+                <string>public.url</string>
+                <string>public.file-url</string>
+                <string>public.image</string>
+            </array>
+            <key>NSSendFileTypes</key>
+            <array>
+                <string>public.image</string>
+                <string>com.adobe.pdf</string>
+                <string>public.plain-text</string>
+                <string>net.daringfireball.markdown</string>
+                <string>public.svg-image</string>
+            </array>
+        </dict>
+    </array>
     <key>NSScreenCaptureUsageDescription</key>
     <string>$APP_NAME captures the screen region you select so it can send it to your mind.</string>
     <key>NSSupportsAutomaticTermination</key>

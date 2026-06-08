@@ -112,12 +112,36 @@ final class DropController {
             return [.imageBitmap(data)]
         }
 
-        // Branch 4: plain text fallback (also covers HTML-only drops via Cocoa's .string derivation)
-        if let text = pasteboard.string(forType: .string), !text.isEmpty {
-            return [.text(text)]
+        // Branch 4: rich/plain text fallback (also covers HTML-only drops via Cocoa's .string derivation)
+        if let item = parseTextItem(from: pasteboard) {
+            return [item]
         }
 
         return []
+    }
+
+    /// Resolves a text selection to either a link (when the plain text is a single
+    /// web URL, so MyMind unfurls it) or a note (formatted text flattened to Markdown,
+    /// plain text otherwise).
+    private func parseTextItem(from pasteboard: NSPasteboard) -> DropPayload.Item? {
+        let plain = pasteboard.string(forType: .string)
+
+        if let plain, let url = DropPayload.detectURL(in: plain) {
+            return .url(url)
+        }
+
+        if let rtfData = pasteboard.data(forType: .rtf),
+           let attributed = try? NSAttributedString(
+               data: rtfData,
+               options: [.documentType: NSAttributedString.DocumentType.rtf],
+               documentAttributes: nil
+           ) {
+            let markdown = DropPayload.markdown(from: attributed)
+            if !markdown.isEmpty { return .text(markdown) }
+        }
+
+        if let plain, !plain.isEmpty { return .text(plain) }
+        return nil
     }
 
     // MARK: - Per-item upload
